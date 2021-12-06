@@ -1,24 +1,20 @@
-from typing import Any
+from functools import reduce
+from typing import Dict
 
 from fastapi import FastAPI
 
-from adapters.UserRepositoryInMemory import UserRepositoryInMemory
-from domain.CreateUser import CreateUser
-from domain.ListUsers import ListUsers
-from domain.UserRepository import UserRepository
-from web.CreateUserHandler import CreateUserHandler
-from web.ListUsersHandler import ListUsersHandler
+from domain.User import User
+from web.list_users_handler import list_users_handler
+from web.create_user_handler import create_user_handler
+from web.delete_user_handler import delete_user_handler
 
 
-class WebApp(FastAPI):
-    def __init__(self, user_repository: UserRepository, **extra: Any):
-        super().__init__(**extra)
-
-        create_user = CreateUserHandler(create_user=CreateUser(user_repository))
-        list_users = ListUsersHandler(list_users=ListUsers(user_repository))
-
-        self.add_api_route(path="/users", methods=['POST'], endpoint=create_user.handle)
-        self.add_api_route(path="/users", methods=['GET'], endpoint=list_users.handle)
+def create_app(users: Dict[str, User]) -> FastAPI:
+    return reduce(lambda _app, fn: fn(_app), [
+        list_users_handler(users),
+        create_user_handler(users),
+        delete_user_handler(users),
+    ], FastAPI())
 
 
-app = WebApp(user_repository=UserRepositoryInMemory())
+app = create_app(users={})

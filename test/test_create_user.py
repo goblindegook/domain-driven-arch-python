@@ -1,26 +1,28 @@
-from starlette.testclient import TestClient
-
-from adapters.UserRepositoryInMemory import UserRepositoryInMemory
-from web.main import WebApp
-
-
-def test_create_a_user():
-    client = TestClient(WebApp(user_repository=UserRepositoryInMemory()))
-
-    response = _create_user(client, "jake.jackson@fbi.gov", "Jake Jackson", "password")
+def test_create_a_user(web_client):
+    client = web_client()
+    response = client.create({"email": "jake.jackson@fbi.gov", "name": "Jake Jackson", "password": "password"})
 
     assert response.status_code == 201
-    assert _list_users(client).json() == [
+    assert client.get_all().json() == [
         {"name": "Jake Jackson", "email": "jake.jackson@fbi.gov"}
     ]
 
 
-def _create_user(client, email: str, name: str, password: str):
-    return client.post(
-        url="/users",
-        json={"email": email, "name": name, "password": password}
-    )
+def test_cannot_create_repeated_user(web_client):
+    client = web_client()
+    client.create({"email": "jake.jackson@fbi.gov", "name": "Jake Jackson", "password": "password"})
+
+    response = client.create({"email": "jake.jackson@fbi.gov", "name": "Jake Jackson", "password": "password"})
+
+    assert response.status_code == 409
+    assert client.get_all().json() == [
+        {"name": "Jake Jackson", "email": "jake.jackson@fbi.gov"}
+    ]
 
 
-def _list_users(client):
-    return client.get(url="/users")
+def test_cannot_create_user_with_invalid_email(web_client):
+    client = web_client()
+
+    response = client.create({"email": "invalid", "name": "Jake Jackson", "password": "password"})
+
+    assert response.status_code == 422

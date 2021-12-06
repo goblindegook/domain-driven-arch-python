@@ -7,8 +7,9 @@ Check the [Kotlin version readme](https://github.com/lsoares/clean-architecture-
 ## Commands
 
 - Setup: get [Poetry](https://python-poetry.org) and `poetry install`
-- Run app: `uvicorn web.main:app`
-- Run tests: `pytest`
+- Run app: `poetry run uvicorn web.main:app`
+- Run tests: `poetry run pytest`
+- Run tests in watch mode: `poetry run ptw`
 
 ## Challenge
 
